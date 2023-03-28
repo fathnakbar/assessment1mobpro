@@ -1,4 +1,4 @@
-package org.d3if3071.helloworld
+package org.d3if3071.asesmen1
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
