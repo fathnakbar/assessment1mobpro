@@ -1,38 +1,92 @@
 package org.d3if3071.asesmen1
 
+import android.animation.Animator
 import android.opengl.Visibility
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.view.animation.Animation
+import android.view.animation.Animation.AnimationListener
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import org.d3if3071.asesmen1.databinding.ListItemBinding
 
 
-class Adapter(private val dataSet: List<Task>, private val setState: (id: Int) -> Unit) :
+class Adapter() :
     RecyclerView.Adapter<Adapter.ViewHolder>() {
+
+    lateinit var controller: TaskController
+    var listType = false;
+    lateinit var updater: () -> Unit;
+
 
     /**
      * Provide a reference to the type of views that you are using
      * (custom ViewHolder)
      */
     class ViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(task: Task, setState: (id: Int) -> Unit) = with(binding){
-            checkBox.text = task.name
+        fun bind(task: Task, updater: () -> Unit, controller: TaskController) = with(binding) {
+//            checkBox.text = task.name
+//            checkBox.isChecked = task.status
 
-            remove.setOnClickListener {
-                setState(task.id)
-            }
+            animationView.setFailureListener { }
 
-            checkBox.setOnClickListener {
-                if (checkBox.isChecked) {
-                    remove.visibility = VISIBLE
-                } else {
-                    remove.visibility = GONE
+            var clicked = false;
+
+            animationView.addAnimatorListener(object : android.animation.Animator.AnimatorListener {
+                override fun onAnimationStart(animation: Animator) {
+
                 }
+
+                override fun onAnimationEnd(animation: Animator) {
+                    if ((task.status && clicked) || !task.status) {
+                        controller.update(task.id, task.apply {
+                            status = !task.status
+                        })
+                        updater();
+                    }
+                }
+
+                override fun onAnimationCancel(animation: Animator) {
+
+                }
+
+                override fun onAnimationRepeat(animation: Animator) {
+
+                }
+
+            })
+
+            if (task.status) {
+                radioButton.visibility = GONE
+                animationView.visibility = VISIBLE
+                animationView.playAnimation()
             }
+
+            animationView.setOnClickListener {
+                animationView.speed = -1.5f
+                clicked = true
+                animationView.playAnimation()
+            }
+
+            radioButton.setOnClickListener {
+                radioButton.visibility = GONE
+                animationView.visibility = VISIBLE
+                animationView.speed = 1.5f
+                animationView.playAnimation()
+            }
+
+            text.text = task.name
+
+//
+//
+//            checkBox
+//
+//            checkBox.setOnClickListener {
+
+//            }
         }
     }
 
@@ -46,11 +100,15 @@ class Adapter(private val dataSet: List<Task>, private val setState: (id: Int) -
 
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
-        viewHolder.bind(dataSet[position], setState)
+        viewHolder.bind(controller.get(listType)[position], updater, controller)
     }
 
     // Return the size of your dataset (invoked by the layout manager)
-    override fun getItemCount() = dataSet.size
+    override fun getItemCount() = controller.get(listType).size
+
+    fun setTaskController(controller: TaskController){
+        this.controller = controller
+    }
 
 }
 
